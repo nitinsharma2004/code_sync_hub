@@ -29,16 +29,16 @@
 - **npm install**
 
 # For frontend
-cd ../client
-npm install
+- **cd ../client**
+- **npm install**
 
 ## Run the project
 # Start backend
-cd server
-npm run dev
+- **cd server**
+- **npm run dev**
 
 # Start frontend
-cd ../client
-npm run dev
+- **cd ../client**
+- **npm run dev**
 
 
