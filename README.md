@@ -19,7 +19,7 @@
 
 - **Frontend**: React.js / HTML / CSS
 - **Backend**: Node.js / Express.js
-- **Database**: MongoDB / PostgreSQL
+- **Database**: MongoDB 
 - **Others**: WebSocket / Git Integration / REST APIs
 
 ---
