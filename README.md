@@ -25,8 +25,8 @@
 ---
 ## Install dependencies
 # For backend
-cd server
-npm install
+- **cd server**
+- **npm install**
 
 # For frontend
 cd ../client
