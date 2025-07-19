@@ -47,7 +47,6 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
     )
 
     const handleError = useCallback(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (err: any) => {
             console.log("socket error", err)
             setStatus(USER_STATUS.CONNECTION_FAILED)
