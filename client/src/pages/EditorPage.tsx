@@ -10,7 +10,7 @@ import { SocketEvent } from "@/types/socket"
 import { USER_STATUS, User } from "@/types/user"
 import { useEffect } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
-
+import Videocallcard from "./Videocallcard"
 function EditorPage() {
     // Listen user online/offline status
     useUserActivity()
@@ -22,6 +22,7 @@ function EditorPage() {
     const { socket } = useSocket()
     const location = useLocation()
 
+    const {showCard, setShowCard} = useSocket();
     useEffect(() => {
         if (currentUser.username.length > 0) return
         const username = location.state?.username
@@ -48,10 +49,19 @@ function EditorPage() {
     }
 
     return (
-        <SplitterComponent>
-            <Sidebar />
-            <WorkSpace/>
-        </SplitterComponent>
+        <div className="relative w-full h-full">
+            
+            {showCard && (
+                <div className="absolute inset-0 flex justify-center items-center bg-black/20 z-50">
+                    <Videocallcard />
+                </div>
+            )}
+
+            <SplitterComponent>
+                <Sidebar />
+                <WorkSpace />
+            </SplitterComponent>
+        </div>
     )
 }
 

@@ -20,11 +20,15 @@ export const useAppContext = (): AppContextType => {
 
 function AppContextProvider({ children }: { children: ReactNode }) {
     const [users, setUsers] = useState<RemoteUser[]>([])
+    const [videousers, setVideoUsers] = useState<RemoteUser[]>([]);
+    const [isinvideocall,setisinvideocall] = useState<boolean>(false);
     const [status, setStatus] = useState<USER_STATUS>(USER_STATUS.INITIAL)
+    const [checkVideoCallEnd, setCheckVideoCallEnd] = useState<boolean>(false);
     const [currentUser, setCurrentUser] = useState<User>({
         username: "",
         roomId: "",
     })
+    const [videoCallState, setVideoCallState] = useState<boolean>(false)
     const [activityState, setActivityState] = useState<ACTIVITY_STATE>(
         ACTIVITY_STATE.CODING,
     )
@@ -43,6 +47,14 @@ function AppContextProvider({ children }: { children: ReactNode }) {
                 setActivityState,
                 drawingData,
                 setDrawingData,
+                videousers,
+                setVideoUsers,
+                isinvideocall,
+                setisinvideocall,
+                videoCallState,
+                setVideoCallState,
+                checkVideoCallEnd,
+                setCheckVideoCallEnd
             }}
         >
             {children}

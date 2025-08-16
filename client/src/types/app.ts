@@ -21,6 +21,14 @@ interface AppContext {
     setActivityState: (state: ACTIVITY_STATE) => void
     drawingData: DrawingData
     setDrawingData: (data: DrawingData) => void
+    videousers: RemoteUser[]
+    setVideoUsers: (users: RemoteUser[]) => void
+    isinvideocall: boolean
+    setisinvideocall: (value: boolean) => void,
+    videoCallState: boolean
+    setVideoCallState: (value: boolean) => void,
+    checkVideoCallEnd: boolean
+    setCheckVideoCallEnd: (value: boolean) => void
 }
 
 export { ACTIVITY_STATE }

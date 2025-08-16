@@ -23,7 +23,7 @@ function Sidebar() {
         setIsSidebarOpen,
     } = useViews()
     const { minHeightReached } = useResponsive()
-    const { activityState, setActivityState } = useAppContext()
+    const { activityState, setActivityState ,isinvideocall,setisinvideocall} = useAppContext()
     const { socket } = useSocket()
     const { isMobile } = useWindowDimensions()
     const [showTooltip, setShowTooltip] = useState(true)
@@ -110,6 +110,14 @@ function Sidebar() {
                     viewName={VIEWS.SETTINGS}
                     icon={viewIcons[VIEWS.SETTINGS]}
                 />
+                {
+                    isinvideocall && (
+                        <SidebarButton
+                            viewName={VIEWS.VIDEO_CALL}
+                            icon={viewIcons[VIEWS.VIDEO_CALL]}
+                        />
+                    )
+                }
             </div>
             <div
                 className="absolute left-0 top-0 z-20 w-full flex-col bg-dark md:static md:min-w-[300px]"

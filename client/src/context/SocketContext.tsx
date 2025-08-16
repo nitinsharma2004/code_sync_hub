@@ -16,7 +16,7 @@ import {
 import { toast } from "react-hot-toast"
 import { Socket, io } from "socket.io-client"
 import { useAppContext } from "./AppContext"
-
+import { useState } from "react"
 const SocketContext = createContext<SocketContextType | null>(null)
 
 export const useSocket = (): SocketContextType => {
@@ -37,7 +37,10 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         setCurrentUser,
         drawingData,
         setDrawingData,
+        setVideoCallState
     } = useAppContext()
+    const [showCard, setShowCard] = useState(false);
+    const [currentVideoUser, setCurrentVideoUser] = useState<RemoteUser | null>(null);
     const socket: Socket = useMemo(
         () =>
             io(BACKEND_URL, {
@@ -100,6 +103,13 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         [setDrawingData],
     )
 
+    const handleShowcard = useCallback(({ showcard }: { showcard: boolean }) => {
+        if (showcard) {
+             setShowCard(showcard);
+        }
+    }, [setShowCard, setVideoCallState])
+
+ 
     useEffect(() => {
         socket.on("connect_error", handleError)
         socket.on("connect_failed", handleError)
@@ -108,6 +118,10 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         socket.on(SocketEvent.USER_DISCONNECTED, handleUserLeft)
         socket.on(SocketEvent.REQUEST_DRAWING, handleRequestDrawing)
         socket.on(SocketEvent.SYNC_DRAWING, handleDrawingSync)
+        socket.on("make-video-call", handleShowcard)
+        socket.on("video-call-ended", () => {
+            setVideoCallState(false);
+        });
 
         return () => {
             socket.off("connect_error")
@@ -117,6 +131,8 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
             socket.off(SocketEvent.USER_DISCONNECTED)
             socket.off(SocketEvent.REQUEST_DRAWING)
             socket.off(SocketEvent.SYNC_DRAWING)
+            socket.off("make-video-call")
+            socket.off("joined-video-call")
         }
     }, [
         handleDrawingSync,
@@ -125,6 +141,7 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         handleRequestDrawing,
         handleUserLeft,
         handleUsernameExist,
+        handleShowcard,
         setUsers,
         socket,
     ])
@@ -133,6 +150,10 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         <SocketContext.Provider
             value={{
                 socket,
+                showCard,
+                setShowCard,
+                currentVideoUser,
+                setCurrentVideoUser
             }}
         >
             {children}

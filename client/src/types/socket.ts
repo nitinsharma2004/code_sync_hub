@@ -1,4 +1,5 @@
 import { Socket } from "socket.io-client"
+import { RemoteUser } from "./user"
 
 type SocketId = string
 
@@ -30,6 +31,10 @@ enum SocketEvent {
 
 interface SocketContext {
     socket: Socket
+    showCard: boolean
+    setShowCard: (showCard: boolean) => void
+    currentVideoUser: RemoteUser | null
+    setCurrentVideoUser: (user: RemoteUser | null) => void
 }
 
 export { SocketEvent, SocketContext, SocketId }
