@@ -12,5 +12,9 @@ interface User {
 	currentFile: string | null
 	socketId: string
 }
+interface VideoUser {
+  socketId: string;      // Unique socket connection ID
+  username: string;      // Display name of the user
+}
 
-export { USER_CONNECTION_STATUS, User }
+export { USER_CONNECTION_STATUS, User, VideoUser }

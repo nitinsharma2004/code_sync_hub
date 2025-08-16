@@ -14,8 +14,8 @@ const app = express()
 app.use(express.json())
 console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
+	origin: process.env.FRONTEND_URL,
+	credentials: true,
 }));
 
 
@@ -26,18 +26,20 @@ const io = new Server(server, {
 	cors: {
 		origin: process.env.FRONTEND_URL,
 		methods: ["GET", "POST"],
-        credentials:true
+		credentials: true
 	},
 	maxHttpBufferSize: 1e8,
 	pingTimeout: 60000,
 })
 
 let userSocketMap: User[] = []
+let roomVideoUsers: { [roomId: string]: User[] } = {}
 
 // Function to get all users in a room
 function getUsersInRoom(roomId: string): User[] {
 	return userSocketMap.filter((user) => user.roomId == roomId)
 }
+
 
 // Function to get room id by socket id
 function getRoomId(socketId: SocketId): string | null {
@@ -264,6 +266,77 @@ io.on("connection", (socket) => {
 			snapshot,
 		})
 	})
+
+	socket.on("make-video-call", () => {
+		const roomId = getRoomId(socket.id)
+		if (!roomId) return
+		io.to(roomId).emit("make-video-call", { showcard: true })
+		
+	})
+
+	socket.on("join-video-call", () => {
+		const roomId = getRoomId(socket.id);
+		if (!roomId) return;
+
+		const user = userSocketMap.find(u => u.socketId === socket.id);
+		if (!user) return;
+
+		if (!roomVideoUsers[roomId]) roomVideoUsers[roomId] = [];
+
+		const existingUsers = roomVideoUsers[roomId].map(u => ({
+			socketId: u.socketId,
+			username: u.username
+		}));
+		io.to(socket.id).emit("existing-users", { users: existingUsers, socketId: socket.id });
+
+		if (!roomVideoUsers[roomId].some(u => u.socketId === user.socketId)) {
+			roomVideoUsers[roomId].push(user);
+		}
+
+		socket.broadcast.to(roomId).emit("user-joined", { userId: socket.id, username: user.username });
+	});
+
+	// Forward WebRTC offer to target user
+	socket.on("offer", ({ to, offer }) => {
+		const user = userSocketMap.find(u => u.socketId === to);
+		if (!user) return;
+		io.to(to).emit("offer", { from: socket.id, offer, username: user.username });
+	});
+
+	// Forward WebRTC answer to target user
+	socket.on("answer", ({ to, answer }) => {
+		io.to(to).emit("answer", { from: socket.id, answer });
+	});
+
+	// Forward ICE candidates to target user
+	socket.on("ice-candidate", ({ to, candidate }) => {
+		io.to(to).emit("ice-candidate", { from: socket.id, candidate });
+	});
+
+	socket.on("leave-video-call", () => {
+		const roomId = getRoomId(socket.id);
+		if (!roomId) return;
+
+		const user = userSocketMap.find(u => u.socketId === socket.id);
+		if (!user) return;
+
+		if (roomVideoUsers[roomId]) {
+			roomVideoUsers[roomId] = roomVideoUsers[roomId].filter(
+				u => u.socketId !== socket.id
+			);
+		}
+
+		// Notify others in the room
+		socket.broadcast.to(roomId).emit("user-left", { userId: socket.id });
+
+		if (roomVideoUsers[roomId] && roomVideoUsers[roomId].length === 0) {
+		     io.to(roomId).emit("video-call-ended");
+		}
+	});
+
+
+
+
 })
 
 const PORT = process.env.PORT || 3000
