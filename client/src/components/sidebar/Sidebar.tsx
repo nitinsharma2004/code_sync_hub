@@ -23,7 +23,7 @@ function Sidebar() {
         setIsSidebarOpen,
     } = useViews()
     const { minHeightReached } = useResponsive()
-    const { activityState, setActivityState ,isinvideocall,setisinvideocall} = useAppContext()
+    const { activityState, setActivityState ,isinvideocall} = useAppContext()
     const { socket } = useSocket()
     const { isMobile } = useWindowDimensions()
     const [showTooltip, setShowTooltip] = useState(true)

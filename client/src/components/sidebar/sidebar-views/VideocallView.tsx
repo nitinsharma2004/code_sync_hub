@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import  { useEffect, useRef, useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { useSocket } from "@/context/SocketContext";
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";

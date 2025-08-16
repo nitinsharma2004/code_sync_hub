@@ -11,7 +11,6 @@ import { ReactNode, createContext, useContext, useState } from "react"
 import { IoSettingsOutline } from "react-icons/io5"
 import { LuFiles, LuSparkles } from "react-icons/lu"
 import { PiChats, PiPlay, PiUsers, PiVideo } from "react-icons/pi"
-import { useSocket } from "./SocketContext"
 
 const ViewContext = createContext<ViewContextType | null>(null)
 

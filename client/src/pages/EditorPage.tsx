@@ -22,7 +22,7 @@ function EditorPage() {
     const { socket } = useSocket()
     const location = useLocation()
 
-    const {showCard, setShowCard} = useSocket();
+    const {showCard} = useSocket();
     useEffect(() => {
         if (currentUser.username.length > 0) return
         const username = location.state?.username
