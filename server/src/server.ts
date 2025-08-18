@@ -99,6 +99,11 @@ io.on("connection", (socket) => {
 			.to(roomId)
 			.emit(SocketEvent.USER_DISCONNECTED, { user })
 		userSocketMap = userSocketMap.filter((u) => u.socketId !== socket.id)
+		if (roomVideoUsers[roomId]) {
+			roomVideoUsers[roomId] = roomVideoUsers[roomId].filter(
+				u => u.socketId !== socket.id
+			);
+		}
 		socket.leave(roomId)
 	})
 
@@ -271,9 +276,10 @@ io.on("connection", (socket) => {
 		const roomId = getRoomId(socket.id)
 		if (!roomId) return
 		io.to(roomId).emit("make-video-call", { showcard: true })
-		
+
 	})
 
+	// Handle when a user joins the video call
 	socket.on("join-video-call", () => {
 		const roomId = getRoomId(socket.id);
 		if (!roomId) return;
@@ -283,24 +289,39 @@ io.on("connection", (socket) => {
 
 		if (!roomVideoUsers[roomId]) roomVideoUsers[roomId] = [];
 
+		// Send existing users in the room to the new user
 		const existingUsers = roomVideoUsers[roomId].map(u => ({
 			socketId: u.socketId,
-			username: u.username
+			username: u.username,
 		}));
-		io.to(socket.id).emit("existing-users", { users: existingUsers, socketId: socket.id });
 
+		io.to(socket.id).emit("existing-users", {
+			users: existingUsers,
+			socketId: socket.id,
+		});
+
+		// Add user to room's video users if not already added
 		if (!roomVideoUsers[roomId].some(u => u.socketId === user.socketId)) {
 			roomVideoUsers[roomId].push(user);
 		}
 
-		socket.broadcast.to(roomId).emit("user-joined", { userId: socket.id, username: user.username });
+		// Notify others in the room that a new user joined
+		socket.broadcast.to(roomId).emit("user-joined-success", {
+			userId: socket.id,
+			username: user.username,
+		});
 	});
 
 	// Forward WebRTC offer to target user
 	socket.on("offer", ({ to, offer }) => {
-		const user = userSocketMap.find(u => u.socketId === to);
-		if (!user) return;
-		io.to(to).emit("offer", { from: socket.id, offer, username: user.username });
+		const fromUser = userSocketMap.find(u => u.socketId === socket.id);
+		if (!fromUser) return;
+
+		io.to(to).emit("offer", {
+			from: socket.id,
+			offer,
+			username: fromUser.username, // ✅ send caller’s username
+		});
 	});
 
 	// Forward WebRTC answer to target user
@@ -313,6 +334,7 @@ io.on("connection", (socket) => {
 		io.to(to).emit("ice-candidate", { from: socket.id, candidate });
 	});
 
+	// Handle user leaving video call
 	socket.on("leave-video-call", () => {
 		const roomId = getRoomId(socket.id);
 		if (!roomId) return;
@@ -329,15 +351,31 @@ io.on("connection", (socket) => {
 		// Notify others in the room
 		socket.broadcast.to(roomId).emit("user-left", { userId: socket.id });
 
+		// If no users left, end the video call for the room
 		if (roomVideoUsers[roomId] && roomVideoUsers[roomId].length === 0) {
-		     io.to(roomId).emit("video-call-ended");
+
+			io.to(roomId).emit("video-call-ended");
 		}
 	});
 
+    socket.on("check-video-call", () => {
+        const roomId = getRoomId(socket.id);
+        if (!roomId) return;
 
+		const checkvideocallhappning = roomVideoUsers[roomId] && roomVideoUsers[roomId].length > 0;
 
+		io.to(socket.id).emit("check-video-call", { happening: checkvideocallhappning });
+	});
 
-})
+	socket.on("check-current-user-in-video-call", () => {
+		const roomId = getRoomId(socket.id);
+		if (!roomId) return;
+
+		const isInVideoCall = roomVideoUsers[roomId]?.some(u => u.socketId === socket.id);
+		io.to(socket.id).emit("current-user-in-video-call", { inCall: isInVideoCall });
+	});
+
+});
 
 const PORT = process.env.PORT || 3000
 
