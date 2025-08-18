@@ -10,6 +10,7 @@ import { IoShareOutline } from "react-icons/io5"
 import { LuCopy } from "react-icons/lu"
 import { useNavigate } from "react-router-dom"
 import Creatvideocard from "./Creatvideocard"
+import { useEffect } from "react"
 
 function UsersView() {
     const navigate = useNavigate()
@@ -52,6 +53,9 @@ function UsersView() {
             setCheckVideoCallEnd(true);
         }
     }
+    useEffect(() => {
+        socket.emit("check-video-call");
+    }, []);
 
     return (
         <div className="flex flex-col p-4" style={{ height: viewHeight }}>

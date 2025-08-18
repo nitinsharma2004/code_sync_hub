@@ -1,14 +1,32 @@
-import  { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { useSocket } from "@/context/SocketContext";
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
-import { toast } from "react-hot-toast";
 
 interface RemoteStream {
   userId: string;
   username: string;
   stream: MediaStream;
 }
+
+const RemoteVideo = ({ stream, username }: { stream: MediaStream; username: string }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <div className="relative rounded-lg overflow-hidden bg-black h-[150px]">
+      <video ref={videoRef} autoPlay playsInline className="w-full h-[150px] object-cover" />
+      <span className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded">
+        {username}
+      </span>
+    </div>
+  );
+};
 
 const VideocallView = () => {
   const { setisinvideocall } = useAppContext();
@@ -34,7 +52,7 @@ const VideocallView = () => {
         localStream.current = stream;
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
-          localVideoRef.current.muted = true; // only local muted
+          localVideoRef.current.muted = true; // prevent echo
         }
         socket.emit("join-video-call");
       } catch (error) {
@@ -47,8 +65,8 @@ const VideocallView = () => {
   useEffect(() => {
     if (!socket) return;
 
+    // Existing users → only the new user sends offers
     socket.on("existing-users", async ({ users, socketId }) => {
-      console.log("Existing users:", users);
       for (const user of users) {
         if (user.socketId === socketId) continue;
         const pc = createPeerConnection(user.socketId, user.username);
@@ -61,20 +79,7 @@ const VideocallView = () => {
       }
     });
 
-    socket.on("user-joined", async ({ userId, username }) => {
-            toast.dismiss();
-            toast.success(`${username} joined the video call`);
-      const pc = createPeerConnection(userId, username);
-      localStream.current?.getTracks().forEach(track =>
-        pc.addTrack(track, localStream.current!)
-      );
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit("offer", { to: userId, offer: pc.localDescription });
-    });
-
     socket.on("offer", async ({ from, offer, username }) => {
-      console.log("Offer from:", username);
       const pc = createPeerConnection(from, username);
       localStream.current?.getTracks().forEach(track =>
         pc.addTrack(track, localStream.current!)
@@ -87,7 +92,6 @@ const VideocallView = () => {
     });
 
     socket.on("answer", async ({ from, answer }) => {
-      console.log("Answer from:", from);
       if (peersRef.current[from]) {
         await peersRef.current[from].setRemoteDescription(
           new RTCSessionDescription(answer)
@@ -107,7 +111,6 @@ const VideocallView = () => {
     });
 
     socket.on("user-left", ({ userId }) => {
-      console.log("User left:", userId);
       if (peersRef.current[userId]) {
         peersRef.current[userId].close();
         delete peersRef.current[userId];
@@ -146,9 +149,14 @@ const VideocallView = () => {
     };
 
     pc.ontrack = (event) => {
-      console.log("Remote track from:", username);
       setRemoteStreams(prev => {
-        if (prev.find(s => s.userId === userId)) return prev;
+        const existing = prev.find(s => s.userId === userId);
+        if (existing) {
+          if (!existing.stream.getTracks().includes(event.track)) {
+            existing.stream.addTrack(event.track);
+          }
+          return [...prev];
+        }
         return [...prev, { userId, username, stream: event.streams[0] }];
       });
     };
@@ -172,8 +180,7 @@ const VideocallView = () => {
     });
     setCamOn(prev => !prev);
   };
-
-  const leaveCall = () => {
+const leaveCall = () => {
     socket.emit("leave-video-call");
     localStream.current?.getTracks().forEach(track => track.stop());
     Object.values(peersRef.current).forEach(pc => pc.close());
@@ -182,16 +189,19 @@ const VideocallView = () => {
     setisinvideocall(false);
   };
 
+
+
+
   return (
-    <div className="flex flex-col items-center w-full h-screen bg-gray-900 text-white">
-      <div className="grid grid-cols-2 gap-4 flex-grow p-4">
-        <div className="relative rounded-lg overflow-hidden bg-black">
+<div className="flex flex-col items-center w-full md:h-screen bg-gray-900 text-white h-[650px]">
+      <div className="grid grid-cols-2 gap-4 flex-grow pt-4 pr-4 pl-4 pb-0">
+        <div className="relative rounded-lg overflow-hidden bg-black h-[150px]">
           <video
             ref={localVideoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className="w-full object-cover h-[150px]"
           />
           <span className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded">
             You
@@ -199,23 +209,11 @@ const VideocallView = () => {
         </div>
 
         {remoteStreams.map(({ userId, username, stream }) => (
-          <div key={userId} className="relative rounded-lg overflow-hidden bg-black">
-            <video
-              autoPlay
-              playsInline
-              ref={(el) => {
-                if (el) el.srcObject = stream;
-              }}
-              className="w-full h-full object-cover"
-            />
-            <span className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded">
-              {username}
-            </span>
-          </div>
+          <RemoteVideo key={userId} stream={stream} username={username} />
         ))}
       </div>
 
-      <div className="flex space-x-4 p-4 bg-gray-800 w-full justify-center">
+      <div className="flex space-x-4 p-2 bg-gray-800 w-full justify-center">
         <button onClick={toggleMic} className="p-3 rounded-full bg-gray-700 hover:bg-gray-600">
           {micOn ? <Mic /> : <MicOff />}
         </button>

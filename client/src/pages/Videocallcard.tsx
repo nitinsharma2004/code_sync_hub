@@ -1,18 +1,21 @@
 import { useAppContext } from "@/context/AppContext";
-import { useSocket } from "@/context/SocketContext"; // ✅ make sure this is a named export
+import { useSocket } from "@/context/SocketContext"; 
+import { useEffect } from "react";
 const Videocallcard = () => {
-  const { showCard, setShowCard,socket } = useSocket();
-  const {setisinvideocall,videoCallState,setVideoCallState,setCheckVideoCallEnd} = useAppContext();
+  const { showCard, setShowCard,socket, currentuserinvideocall } = useSocket();
+  const {setisinvideocall,videoCallState,setCheckVideoCallEnd} = useAppContext();
   const joinusertovideocall = () => {
         socket.emit("join-video-call");
         setShowCard(false);
         setisinvideocall(true);
-         setVideoCallState(true);
-         setCheckVideoCallEnd(false);
+        setCheckVideoCallEnd(false);
   };
 
-  if (!showCard) return null;
+  useEffect(() => {
+    socket.emit("check-current-user-in-video-call");
+  }, [currentuserinvideocall]);
 
+  if (!showCard || currentuserinvideocall) return null;
 
   return (
     <div className="flex justify-center items-center">

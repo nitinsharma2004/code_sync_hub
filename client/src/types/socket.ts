@@ -35,6 +35,8 @@ interface SocketContext {
     setShowCard: (showCard: boolean) => void
     currentVideoUser: RemoteUser | null
     setCurrentVideoUser: (user: RemoteUser | null) => void
+    currentuserinvideocall: boolean
+    setCurrentUserInVideoCall: (inCall: boolean) => void
 }
 
 export { SocketEvent, SocketContext, SocketId }

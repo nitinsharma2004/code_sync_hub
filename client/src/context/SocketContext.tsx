@@ -41,6 +41,7 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
     } = useAppContext()
     const [showCard, setShowCard] = useState(false);
     const [currentVideoUser, setCurrentVideoUser] = useState<RemoteUser | null>(null);
+    const [currentuserinvideocall, setCurrentUserInVideoCall] = useState(false);
     const socket: Socket = useMemo(
         () =>
             io(BACKEND_URL, {
@@ -105,11 +106,23 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     const handleShowcard = useCallback(({ showcard }: { showcard: boolean }) => {
         if (showcard) {
-             setShowCard(showcard);
+            setShowCard(showcard);
         }
-    }, [setShowCard, setVideoCallState])
+    }, [setShowCard])
 
- 
+    const checkvideocallstate = useCallback(({ happening }: { happening: boolean }) => {
+        setVideoCallState(happening);
+    }, [setVideoCallState])
+
+    const checkcurrentuserinvideocall = useCallback(({ inCall }: { inCall: boolean }) => {
+        setCurrentUserInVideoCall(inCall);
+    }, [setCurrentUserInVideoCall])
+
+
+    const checkvideocallend = useCallback(()=>{
+        setVideoCallState(false);
+    }, [setVideoCallState])
+
     useEffect(() => {
         socket.on("connect_error", handleError)
         socket.on("connect_failed", handleError)
@@ -119,8 +132,12 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         socket.on(SocketEvent.REQUEST_DRAWING, handleRequestDrawing)
         socket.on(SocketEvent.SYNC_DRAWING, handleDrawingSync)
         socket.on("make-video-call", handleShowcard)
-        socket.on("video-call-ended", () => {
-            setVideoCallState(false);
+        socket.on("video-call-ended", checkvideocallend);
+        socket.on("check-video-call", checkvideocallstate);
+        socket.on("current-user-in-video-call", checkcurrentuserinvideocall);
+        socket.on("user-joined-success", ({ username }) => {
+            toast.dismiss();
+            toast.success(`${username} joined the video call`);
         });
 
         return () => {
@@ -133,6 +150,8 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
             socket.off(SocketEvent.SYNC_DRAWING)
             socket.off("make-video-call")
             socket.off("joined-video-call")
+            socket.off("check-video-call")
+            socket.off("current-user-in-video-call")
         }
     }, [
         handleDrawingSync,
@@ -141,6 +160,9 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         handleRequestDrawing,
         handleUserLeft,
         handleUsernameExist,
+        checkvideocallstate,
+        checkcurrentuserinvideocall,
+        checkvideocallend,
         handleShowcard,
         setUsers,
         socket,
@@ -153,7 +175,9 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
                 showCard,
                 setShowCard,
                 currentVideoUser,
-                setCurrentVideoUser
+                setCurrentVideoUser,
+                currentuserinvideocall,
+                setCurrentUserInVideoCall,
             }}
         >
             {children}

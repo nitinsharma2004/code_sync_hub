@@ -47,11 +47,10 @@ function EditorPage() {
     if (status === USER_STATUS.CONNECTION_FAILED) {
         return <ConnectionStatusPage />
     }
-
     return (
         <div className="relative w-full h-full">
             
-            {showCard && (
+            {showCard &&  (
                 <div className="absolute inset-0 flex justify-center items-center bg-black/20 z-50">
                     <Videocallcard />
                 </div>
