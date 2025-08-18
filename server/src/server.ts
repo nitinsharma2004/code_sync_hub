@@ -300,10 +300,14 @@ io.on("connection", (socket) => {
 			socketId: socket.id,
 		});
 
-		// Add user to room's video users if not already added
-		if (!roomVideoUsers[roomId].some(u => u.socketId === user.socketId)) {
-			roomVideoUsers[roomId].push(user);
-		}
+		// Remove old entry (if any) for this user
+		roomVideoUsers[roomId] = roomVideoUsers[roomId].filter(
+			u => u.socketId !== user.socketId
+		);
+
+		// Add the fresh one
+		roomVideoUsers[roomId].push(user);
+
 
 		// Notify others in the room that a new user joined
 		socket.broadcast.to(roomId).emit("user-joined-success", {
@@ -358,9 +362,9 @@ io.on("connection", (socket) => {
 		}
 	});
 
-    socket.on("check-video-call", () => {
-        const roomId = getRoomId(socket.id);
-        if (!roomId) return;
+	socket.on("check-video-call", () => {
+		const roomId = getRoomId(socket.id);
+		if (!roomId) return;
 
 		const checkvideocallhappning = roomVideoUsers[roomId] && roomVideoUsers[roomId].length > 0;
 

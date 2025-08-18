@@ -193,7 +193,7 @@ const leaveCall = () => {
 
 
   return (
-<div className="flex flex-col items-center w-full md:h-screen bg-gray-900 text-white h-[650px]">
+<div className="flex flex-col items-center w-full md:h-screen bg-gray-900 text-white h-[94vh]">
       <div className="grid grid-cols-2 gap-4 flex-grow pt-4 pr-4 pl-4 pb-0">
         <div className="relative rounded-lg overflow-hidden bg-black h-[150px]">
           <video
